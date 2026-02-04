@@ -61,41 +61,20 @@ def calculate_pgs(df_snp, df_eff, df_amp_samples, sig_only=False, standardise=Tr
 
     return pgs_df
 
-def _calculate_pgs(genotypes, odds_ratios, standardise):
+
+def _calculate_pgs(genotypes, odds_ratios, standardize=True):
     """
-    Calculate Polygenic Scores (PGS) for samples.
-    
-    Parameters:
-    genotypes : ndarray
-        3D array of shape (n_snps, n_samples, ploidy)
-    odds_ratios : ndarray
-        1D array of odds ratios for each SNP
-    standardise : bool, optional
-        Whether to standardise the final scores
-    
-    Returns:
-    ndarray
-        1D array of PGS for each sample
+    genotypes: 2D array (n_snps, n_samples) of alt-allele counts (0,1,2)
+    odds_ratios: 1D array (n_snps,)
     """
-    # Ensure odds_ratios is a 1D array
-    odds_ratios = np.asarray(odds_ratios).flatten().round(3)
-    
-    # Calculate Betas / log ORs (effect sizes)
-    effect_sizes = np.log(odds_ratios)
-    
-    # Reshape effect sizes to broadcast correctly
-    effect_sizes = effect_sizes.reshape(-1, 1, 1)
-    
-    # Calculate PRS
-    pgs = np.sum(genotypes * effect_sizes, axis=(0, 1))
-    
-    # Standardise if requested
-    if standardise:
-        pgs = (pgs - np.mean(pgs)) / np.std(pgs)
-    
+    odds_ratios = np.asarray(odds_ratios).flatten()
+    betas = np.log(odds_ratios) # (n_snps,)
+    pgs = (genotypes * betas[:, None]).sum(axis=0) # (n_samples,)
+
+    if standardize:  
+        pgs = (pgs - pgs.mean()) / pgs.std(ddof=0)  
+
     return pgs
-
-
 
 
 
